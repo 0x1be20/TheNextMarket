@@ -1,10 +1,10 @@
 {
     "LOG": {
-        "console": true,
-        "level": "DEBUG",
-        "path": "/data/logs/servers/Market",
+        "console": false,
+        "level": "ERROR",
+        "path": "./logs",
         "name": "market.log",
-        "clear": true,
+        "clear": false,
         "backup_count": 5
     },
     "RABBITMQ": {
@@ -18,7 +18,7 @@
 
         "binance_future": {
             "symbols": [
-                "BTC/USDT"
+                "BTCUSDT"
             ],
             "channels": [
                 "orderbook", "aggTrade"

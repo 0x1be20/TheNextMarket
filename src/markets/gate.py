@@ -10,6 +10,7 @@ Email:  huangtao@ifclover.com
 """
 
 import copy
+from time import time
 
 from quant import const
 from quant.utils import tools
@@ -146,7 +147,8 @@ class GateMarket:
                 "action": action,
                 "price": price,
                 "quantity": quantity,
-                "timestamp": timestamp
+                "timestamp": timestamp,
+                "_eventtime": time()
             }
             EventTrade(**trade).publish()
             logger.info("symbol:", symbol, "trade:", trade, caller=self)
@@ -220,7 +222,8 @@ class GateMarket:
             "symbol": symbol,
             "asks": asks,
             "bids": bids,
-            "timestamp": ob["timestamp"]
+            "timestamp": ob["timestamp"],
+            "_eventtime": time()
         }
         EventOrderbook(**orderbook).publish()
         logger.info("symbol:", symbol, "orderbook:", orderbook, caller=self)
@@ -250,7 +253,8 @@ class GateMarket:
                 "close": close,
                 "volume": volume,
                 "timestamp": timestamp,
-                "kline_type": const.MARKET_TYPE_KLINE
+                "kline_type": const.MARKET_TYPE_KLINE,
+                "_eventtime": time()
             }
             EventKline(**kline).publish()
             logger.info("symbol:", symbol, "kline:", kline, caller=self)

@@ -9,6 +9,7 @@ Date:   2018/09/13
 Email:  huangtao@ifclover.com
 """
 
+from time import time
 from quant.utils import tools
 from quant.utils import logger
 from quant.tasks import LoopRunTask
@@ -101,7 +102,8 @@ class Bitmex:
                 "symbol": symbol,
                 "asks": item.get("asks"),
                 "bids": item.get("bids"),
-                "timestamp": tools.utctime_str_to_mts(item["timestamp"])
+                "timestamp": tools.utctime_str_to_mts(item["timestamp"]),
+                "_eventtime": time()
             }
             EventOrderbook(**orderbook).publish()
             logger.debug("symbol:", symbol, "orderbook:", orderbook, caller=self)
@@ -119,7 +121,8 @@ class Bitmex:
                 "close": "%.8f" % item["close"],
                 "volume": str(item["volume"]),
                 "timestamp": tools.utctime_str_to_mts(item["timestamp"]),
-                "kline_type": MARKET_TYPE_KLINE
+                "kline_type": MARKET_TYPE_KLINE,
+                "_eventtime": time()
             }
             EventKline(**kline).publish()
             logger.debug("symbol:", symbol, "kline:", kline, caller=self)
@@ -134,7 +137,8 @@ class Bitmex:
                 "action":  ORDER_ACTION_BUY if item["side"] == "Buy" else ORDER_ACTION_SELL,
                 "price": "%.8f" % item["price"],
                 "quantity": str(item["size"]),
-                "timestamp": tools.utctime_str_to_mts(item["timestamp"])
+                "timestamp": tools.utctime_str_to_mts(item["timestamp"]),
+                "_eventtime": time()
             }
             EventTrade(**trade).publish()
             logger.debug("symbol:", symbol, "trade:", trade, caller=self)

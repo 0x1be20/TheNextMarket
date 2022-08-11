@@ -9,6 +9,7 @@ Date:   2018/12/20
 Email:  huangtao@ifclover.com
 """
 
+from time import time
 import zlib
 import json
 import copy
@@ -231,7 +232,8 @@ class OKExFuture:
             "symbol": symbol,
             "asks": asks,
             "bids": bids,
-            "timestamp": ob["timestamp"]
+            "timestamp": ob["timestamp"],
+            "_eventtime": time()
         }
         EventOrderbook(**orderbook).publish()
         logger.debug("symbol:", symbol, "orderbook:", orderbook, caller=self)
@@ -256,7 +258,8 @@ class OKExFuture:
             "action": action,
             "price": price,
             "quantity": quantity,
-            "timestamp": timestamp
+            "timestamp": timestamp,
+            "_eventtime": time()
         }
         EventTrade(**trade).publish()
         logger.debug("symbol:", symbol, "trade:", trade, caller=self)
@@ -287,7 +290,8 @@ class OKExFuture:
             "close": close,
             "volume": volume,
             "timestamp": timestamp,
-            "kline_type": const.MARKET_TYPE_KLINE
+            "kline_type": const.MARKET_TYPE_KLINE,
+            "_eventtime": time()
         }
         EventKline(**kline).publish()
         logger.debug("symbol:", symbol, "kline:", kline, caller=self)

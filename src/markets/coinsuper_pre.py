@@ -12,6 +12,7 @@ NOTE:   1. Fetching market information via REST API.
 """
 
 import asyncio
+from time import time
 
 from quant import const
 from quant.utils import tools
@@ -105,7 +106,8 @@ class CoinsuperPreMarket:
                 "symbol": symbol,
                 "asks": asks,
                 "bids": bids,
-                "timestamp": tools.get_cur_timestamp_ms()
+                "timestamp": tools.get_cur_timestamp_ms(),
+                "_eventtime": time()
             }
             EventOrderbook(**orderbook).publish()
             logger.info("symbol:", symbol, "orderbook:", orderbook, caller=self)
@@ -126,7 +128,8 @@ class CoinsuperPreMarket:
                     "action": data["tradeType"],
                     "price": data["price"],
                     "quantity": data["volume"],
-                    "timestamp": data["timestamp"]
+                    "timestamp": data["timestamp"],
+                    "_eventtime": time()
                 }
                 EventTrade(**trade).publish()
                 logger.info("symbol:", symbol, "trade:", trade, caller=self)
@@ -170,7 +173,8 @@ class CoinsuperPreMarket:
             "close": "%.8f" % float(result[0]["close"]),
             "volume": "%.8f" % float(result[0]["volume"]),
             "timestamp": result[0]["timestamp"],
-            "kline_type": kline_type
+            "kline_type": kline_type,
+            "_eventtime": time()
         }
         EventKline(**kline).publish()
         logger.info("symbol:", symbol, "kline:", kline, caller=self)

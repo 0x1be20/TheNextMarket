@@ -11,6 +11,7 @@ Email:  huangtao@ifclover.com
 
 import copy
 import asyncio
+from time import time
 
 from quant.utils import tools
 from quant.utils import logger
@@ -207,7 +208,8 @@ class KucoinMarket:
             "symbol": symbol,
             "asks": asks,
             "bids": bids,
-            "timestamp": data["timestamp"]
+            "timestamp": data["timestamp"],
+            "_eventtime": time()
         }
         EventOrderbook(**orderbook).publish()
         logger.info("symbol:", symbol, "orderbook:", orderbook, caller=self)
@@ -230,7 +232,8 @@ class KucoinMarket:
             "action": action,
             "price": price,
             "quantity": quantity,
-            "timestamp": timestamp
+            "timestamp": timestamp,
+            "_eventtime": time()
         }
         EventTrade(**trade).publish()
         logger.info("symbol:", symbol, "trade:", trade, caller=self)
@@ -246,7 +249,8 @@ class KucoinMarket:
                 "symbol": symbol,
                 "asks": result["asks"],
                 "bids": result["bids"],
-                "timestamp": result["time"]
+                "timestamp": result["time"],
+                "_eventtime": time()
             }
             EventOrderbook(**orderbook).publish()
             logger.info("symbol:", symbol, "orderbook:", orderbook, caller=self)

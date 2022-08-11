@@ -12,6 +12,7 @@ Email:  huangtao@ifclover.com
 
 import base64
 import hashlib
+from time import time
 
 from quant.utils import tools
 from quant.utils import logger
@@ -137,7 +138,8 @@ class Deribit:
             "symbol": symbol,
             "asks": asks,
             "bids": bids,
-            "timestamp": self._last_msg_ts
+            "timestamp": self._last_msg_ts,
+            "_eventtime": time()
         }
         EventOrderbook(**orderbook).publish()
         logger.debug("symbol:", symbol, "orderbook:", orderbook, caller=self)
@@ -154,7 +156,8 @@ class Deribit:
                 "action":  ORDER_ACTION_SELL if item["direction"] == "sell" else ORDER_ACTION_BUY,
                 "price": item.get("price"),
                 "quantity": item.get("quantity"),
-                "timestamp": item["timeStamp"]
+                "timestamp": item["timeStamp"],
+                "_eventtime": time()
             }
             EventTrade(**trade).publish()
             logger.info("symbol:", symbol, "trade:", trade, caller=self)

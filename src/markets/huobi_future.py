@@ -11,6 +11,7 @@ Email:  huangtao@ifclover.com
 
 import gzip
 import json
+from time import time
 
 from quant.utils import logger
 from quant.utils.web import Websocket
@@ -106,7 +107,8 @@ class HuobiFutureMarket:
                 "close": d["close"],
                 "volume": d["amount"],
                 "timestamp": data.get("ts"),
-                "kline_type": MARKET_TYPE_KLINE
+                "kline_type": MARKET_TYPE_KLINE,
+                "_eventtime": time()
             }
             EventKline(**kline).publish()
             logger.debug("symbol:", symbol, "kline:", kline, caller=self)
@@ -120,7 +122,8 @@ class HuobiFutureMarket:
                 "symbol": symbol,
                 "asks": asks,
                 "bids": bids,
-                "timestamp": timestamp
+                "timestamp": timestamp,
+                "_eventtime": time()
             }
             EventOrderbook(**orderbook).publish()
             logger.debug("symbol:", symbol, "orderbook:", orderbook, caller=self)
@@ -135,7 +138,8 @@ class HuobiFutureMarket:
                 "action": ORDER_ACTION_BUY if direction == "buy" else ORDER_ACTION_SELL,
                 "price": price,
                 "quantity": quantity,
-                "timestamp": tick.get("ts")
+                "timestamp": tick.get("ts"),
+                "_eventtime": time()
             }
             EventTrade(**trade).publish()
             logger.debug("symbol:", symbol, "trade:", trade, caller=self)

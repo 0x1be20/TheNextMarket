@@ -9,6 +9,7 @@ Date:   2018/07/04
 Email:  huangtao@ifclover.com
 """
 
+from time import time
 from quant import const
 from quant.utils import tools
 from quant.utils import logger
@@ -102,7 +103,8 @@ class Binance:
             "close": data.get("k").get("c"),
             "volume": data.get("k").get("q"),
             "timestamp": data.get("k").get("t"),
-            "kline_type": const.MARKET_TYPE_KLINE
+            "kline_type": const.MARKET_TYPE_KLINE,
+            "_eventtime": time()
         }
         EventKline(**kline).publish()
         logger.info("symbol:", symbol, "kline:", kline, caller=self)
@@ -120,7 +122,8 @@ class Binance:
             "symbol": symbol,
             "asks": asks,
             "bids": bids,
-            "timestamp": tools.get_cur_timestamp_ms()
+            "timestamp": tools.get_cur_timestamp_ms(),
+            "_eventtime": time()
         }
         EventOrderbook(**orderbook).publish()
         logger.info("symbol:", symbol, "orderbook:", orderbook, caller=self)
@@ -133,7 +136,8 @@ class Binance:
             "action":  ORDER_ACTION_SELL if data["m"] else ORDER_ACTION_BUY,
             "price": data.get("p"),
             "quantity": data.get("q"),
-            "timestamp": data.get("T")
+            "timestamp": data.get("T"),
+            "_eventtime": time()
         }
         EventTrade(**trade).publish()
         logger.info("symbol:", symbol, "trade:", trade, caller=self)

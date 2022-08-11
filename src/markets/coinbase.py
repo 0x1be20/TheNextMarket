@@ -10,6 +10,7 @@ Email:  huangtao@ifclover.com
 """
 
 import copy
+from time import time
 
 from quant.utils import tools
 from quant.utils import logger
@@ -181,7 +182,8 @@ class CoinbaseMarket:
             "symbol": symbol,
             "asks": asks,
             "bids": bids,
-            "timestamp": tools.get_cur_timestamp_ms()
+            "timestamp": tools.get_cur_timestamp_ms(),
+            "_eventtime": time()
         }
         EventOrderbook(**orderbook).publish()
         logger.info("symbol:", symbol, "orderbook:", orderbook, caller=self)
@@ -204,7 +206,8 @@ class CoinbaseMarket:
             "action": action,
             "price": price,
             "quantity": quantity,
-            "timestamp": timestamp
+            "timestamp": timestamp,
+            "_eventtime": time()
         }
         EventTrade(**trade).publish()
         logger.info("symbol:", symbol, "trade:", trade, caller=self)
