@@ -9,6 +9,9 @@ Date:   2018/07/04
 Email:  huangtao@ifclover.com
 """
 
+from itertools import product
+import json
+import random
 from time import time
 from quant import const
 from quant.utils import tools
@@ -16,6 +19,8 @@ from quant.utils import logger
 from quant.utils.web import Websocket
 from quant.order import ORDER_ACTION_BUY, ORDER_ACTION_SELL
 from quant.event import EventTrade, EventKline, EventOrderbook
+
+from quant.tasks import SingleTask
 
 
 class BinanceFuture:
@@ -36,6 +41,8 @@ class BinanceFuture:
         self._symbols = list(set(kwargs.get("symbols")))
         self._channels = kwargs.get("channels")
         self._orderbook_length = kwargs.get("orderbook_length", 20)
+
+        self._left_channels = set(self._to_channels(self._symbols,self._channels))
 
         self._c_to_s = {}
         self._tickers = {}
@@ -65,6 +72,17 @@ class BinanceFuture:
                 logger.error("channel error! channel:", ch, caller=self)
         url = self._wss + "/stream?streams=" + "/".join(cc)
         return url
+
+    @property
+    def platform(self):
+        return self._platform
+    @property
+    def symbols(self):
+        return self._symbols
+
+    @property
+    def channels(self):
+        return list(self._left_channels)
 
     async def process(self, msg):
         """Process message that received from Websocket connection.
@@ -98,12 +116,12 @@ class BinanceFuture:
         kline = {
             "platform": self._platform,
             "symbol": symbol,
-            "open": data.get("k").get("o"),
-            "high": data.get("k").get("h"),
-            "low": data.get("k").get("l"),
-            "close": data.get("k").get("c"),
-            "volume": data.get("k").get("q"),
-            "timestamp": data.get("k").get("t"),
+            "open": float(data.get("k").get("o")),
+            "high": float(data.get("k").get("h")),
+            "low": float(data.get("k").get("l")),
+            "close": float(data.get("k").get("c")),
+            "volume": float(data.get("k").get("q")),
+            "timestamp": float(data.get("k").get("t")),
             "kline_type": const.MARKET_TYPE_KLINE,
             "_eventtime": time()
         }
@@ -115,9 +133,9 @@ class BinanceFuture:
         bids = []
         asks = []
         for bid in data.get("b")[:self._orderbook_length]:
-            bids.append(bid[:2])
+            bids.append([float(bid[0]),float(bid[1])])
         for ask in data.get("a")[:self._orderbook_length]:
-            asks.append(ask[:2])
+            asks.append([float(ask[0]),float(ask[1])])
         orderbook = {
             "platform": self._platform,
             "symbol": symbol,
@@ -135,15 +153,48 @@ class BinanceFuture:
             "platform": self._platform,
             "symbol": symbol,
             "action":  ORDER_ACTION_SELL if data["m"] else ORDER_ACTION_BUY,
-            "price": data.get("p"),
-            "quantity": data.get("q"),
-            "timestamp": data.get("T"),
+            "price": float(data.get("p")),
+            "quantity": float(data.get("q")),
+            "timestamp": float(data.get("T")),
             "_eventtime": time()
         }
         EventTrade(**trade).publish()
         logger.info("symbol:", symbol, "trade:", trade, caller=self)
 
     def _symbol_to_channel(self, symbol, channel_type="ticker"):
-        channel = "{x}@{y}".format(x=symbol.replace("/", "").lower(), y=channel_type)
+        channel = self.symbol_to_channel(symbol,channel_type)
         self._c_to_s[channel] = symbol
         return channel
+
+    def symbol_to_channel(self,symbol,channel_type):
+        channel = "{x}@{y}".format(x=symbol.replace("/", "").lower(), y=channel_type)
+        return channel
+
+    async def close_market(self,symbols=[],channels=[]):
+        close_channels = set(self._to_channels(symbols,channels))
+        self._left_channels = self._left_channels-close_channels
+        logger.info("close channels:",list(close_channels),caller=self)
+        if len(self._left_channels)==0:
+            self._ws.close()
+        await self._ws.send(json.dumps({
+            "method":"UNSUBSCRIBE",
+            "params":list(
+                map(
+                    lambda v:self._symbol_to_channel(v[0],self._to_standard_channel(v[1])),
+                    list(map(lambda v:v.split("@"),close_channels))
+                )),
+            "id":int(random.random()*10000)
+        }))
+
+    def _to_standard_channel(self,ch):
+        if ch == "kline":
+            return "kline_1m"
+        elif ch == "orderbook":
+            return "depth20@100ms"
+        elif ch in ["trade", "aggTrade"]:
+            return "aggTrade"
+        else:
+            return ch
+
+    def _to_channels(self,symbols=[],channels=[]):
+        return list(map(lambda v:self.symbol_to_channel(v[0],v[1]),product(symbols,channels)))
