@@ -17,6 +17,7 @@ import sys
 from quant import const
 from quant.quant import quant
 from quant.config import config
+from quant.tasks import SingleTask
 from aiohttp import web
 
 import aiohttp_cors
@@ -25,7 +26,7 @@ nest_asyncio.apply()
 
 markets = []
 
-def connect_market(platform,symbols:list[str],channels:list[str],orderbook_length=20):
+def connect_market(platform,symbols,channels,orderbook_length=20):
     if platform == const.OKEX or platform == const.OKEX_MARGIN:
         from markets.okex import OKEx as Market
     elif platform == const.OKEX_FUTURE or platform == const.OKEX_SWAP:
@@ -130,7 +131,7 @@ def setup_manage_server(port=9092):
 def main():
     config_file = sys.argv[1]  # config file, e.g. config.json.
     quant.initialize(config_file)
-    setup_manage_server(getattr(config,"port",9092))
+    SingleTask.call_later(setup_manage_server,5,getattr(config,"port",9092))
     quant.start()
 
 
